@@ -1,7 +1,5 @@
 Package minipython;
 
-States
-
 Helpers
 	digit = ['0' .. '9'];
 	letter = ['a' .. 'z']|['A' .. 'Z'];
@@ -83,34 +81,75 @@ Ignored Tokens
 	blank, line_comment;
 	
 Productions
-	programme = commands*;
+	goal = commands*;
 	
-	commands ={stat} statement|
-				 {expr}expression;
-	
+	commands = {func_cmd} function|
+				{state_cmd}statement;
+
+	function = {func}def identifier l_par argument? r_par semi statement;
+
+	argument = {arg}identifier eq_value? next_args*;
+
+	eq_value = eq value; /*helper for {arg} and {next_args} rules*/
+
+	next_args ={next_args} comma identifier eq_value?; /*helper for {arg} rule*/
+
 	statement ={if}tab* if  comparison semi statement |
-				  {assign}tab* id eq expression |
-				  {print}tab* print expression;
-	
+				{while}tab* while comparison semi statement |
+				{for}tab* for [id1]:identifier in [id2]:identifier semi statement |
+				{return}tab* return expression |
+				{assign}tab* id eq expression |
+				{minus_assign}tab* id minus_eq expression |
+				{div_assign}tab* id div_eq expression |
+				{print}tab* print expression next_exp* |
+				{array_assignment}identifier l_br [exp_in_br]:expression r_br eq [exp_out_br]:expression |
+				{assert}tab* assert expression next_exp?|
+				{function_call_state}tab* function_call;
+
 	comparison = {true} true|
-					 {false} false|
-					 {lessc} [lpar]:expression less [rpar]:expression|
-					 {greatc}[lpar]:expression great [rpar]:expression;
-					 
+					{false}false|
+					{lessc}[lpar]:expression less [rpar]:expression |
+					{greatc}[lpar]:expression greater [rpar]:expression |
+					{lesseqc} [lpar]:expression less_equal [rpar]:expression |
+					{greateqc}[lpar]:expression greater_equal [rpar]:expression |
+					{not_equalc}[lpar]:expression not_equal [rpar]:expression |
+					{equalc}[lpar]:expression equal [rpar]:expression;
+
 	expression = {multiplication} multiplication |
 					{addition} expression plus multiplication|
 					{subtraction} expression minus multiplication;
 					
-	multiplication = {something} something |
-						  {multiplication} multiplication mult something;
-						  
+	multiplication = {power} power |
+						{multiplication} multiplication mult power |
+						{division} multiplication div power |
+						{modulo} multiplication mod power;
+
+	power = {something} something |
+			{power} power expon something;
+
 	something ={identifier}id|
-				  {numb}number|
-				  {par} l_par expression r_par;
+				{id_inside_br_exp}identifier l_br expression r_br |
+				{function_call_exp}function_call |
+				{value}value |
+				{par}l_par expression r_par |
+				{opens}open l_par [exp1]:expression comma [exp2]:expression r_par |
+				{types}type l_par identifier r_par |
+				{maxs}max l_par value next_value+ r_par |
+				{mins}min l_par value next_value+ r_par |
+				{array}l_br expression next_exp* r_br;
 
+	next_value = comma value; /*helper for {min} and {max} rules*/
+						  
+	value =	{num} num |
+			{string} string |
+			{none} none;
 
+	function_call = {function_call} identifier l_par arglist? r_par;
 
+	arglist = expression next_exp*;
 
-Abstract Syntax Tree
+	next_exp = comma expression; /*helper for {print} , {assert} , {array} and {arglist} rules*/
 
+	num = number;
 
+	identifier = id;
