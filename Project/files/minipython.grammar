@@ -102,18 +102,24 @@ Productions
 				{minus_assign}tab* id minus_eq expression |
 				{div_assign}tab* id div_eq expression |
 				{print}tab* print expression next_exp* |
-				{array_assignment}identifier l_br [exp_in_br]:expression r_br eq [exp_out_br]:expression |
+				{array_assignment}tab* identifier l_br [exp_in_br]:expression r_br eq [exp_out_br]:expression |
 				{assert}tab* assert expression next_exp?|
 				{function_call_state}tab* function_call;
 
-	comparison = {true} true|
-					{false}false|
-					{lessc}[lpar]:expression less [rpar]:expression |
-					{greatc}[lpar]:expression greater [rpar]:expression |
-					{lesseqc} [lpar]:expression less_equal [rpar]:expression |
-					{greateqc}[lpar]:expression greater_equal [rpar]:expression |
-					{not_equalc}[lpar]:expression not_equal [rpar]:expression |
-					{equalc}[lpar]:expression equal [rpar]:expression;
+	comparison ={notc}not_comparison|
+				{andc}comparison and not_comparison|
+				{orc}comparison or not_comparison;
+
+	not_comparison = not* comparison_final;
+
+	comparison_final = {true} true|
+						{false} false|
+					 	{lessc} [lpar]:expression less [rpar]:expression|
+						{lessequalc} [lpar]:expression less_equal [rpar]:expression|
+					 	{greatc}[lpar]:expression greater [rpar]:expression|
+						{greatequalc} [lpar]:expression greater_equal [rpar]:expression|
+						{equal} [lpar]:expression equal [rpar]:expression|
+						{notequal} [lpar]:expression not_equal [rpar]:expression;
 
 	expression = {multiplication} multiplication |
 					{addition} expression plus multiplication|
