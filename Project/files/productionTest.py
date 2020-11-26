@@ -28,4 +28,4 @@ def generalTest(x, y=0, z, ar):
 		for x in array:
 			x /= y/z
 	if x <3+2:
-		return z
+		return z.get()
