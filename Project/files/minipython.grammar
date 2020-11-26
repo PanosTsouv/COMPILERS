@@ -146,7 +146,8 @@ Productions
 
 	next_value = comma value; /*helper for {min} and {max} rules*/
 						  
-	value =	{num} num |
+	value =	{idfunctioncall}identifier dot function_call |
+			{num} num |
 			{string} string |
 			{none} none;
 
