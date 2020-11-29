@@ -19,12 +19,8 @@ Tokens
 	div = '/';
 	mod = '%';
 	/*Assignment operators*/
-	plus_eq = '+=';
 	minus_eq = '-=';
-	mult_eq = '*=';
-	expon_eq = '**=';
 	div_eq = '/=';
-	mod_eq = '%=';
 	eq = '=';
 	/*Comparison operators*/
 	equal = '==';
@@ -37,7 +33,7 @@ Tokens
 	and = 'and';
 	or = 'or';
 	not = 'not';
-	/*in operator. not in will be counted as two tokens*/
+	/*in operator. "not in" will be counted as two tokens*/
 	in = 'in';
 	/*Parentheses and brackets*/
 	l_par = '(';
@@ -54,11 +50,8 @@ Tokens
 	true = 'true';
 	false = 'false';
 	/*Special words*/
-	dictt = 'dict';
 	def = 'def';
 	if = 'if';
-	elif = 'elif';
-	else = 'else';
 	while = 'while';
 	for = 'for';
 	print = 'print';
@@ -73,6 +66,8 @@ Tokens
 	blank = (' ' | lf | cr);
 	line_comment = '#' not_eol* eol;
 	/*numbers, variable or function names and strings*/
+	/*Since there were no istructions in the Minipython BNF as to what is or isn't a number we followed python*/
+	/*So .9E-1 for example is a perfectly fine number. It is the number 0.09*/
 	number = (digit+ | (digit* '.' digit+))(('e' | 'E') ('+' | '-')? digit+)?;
 	id = (letter | '_') (letter | '_' | digit)*;
 	string = ('"' not_eol* '"') | (39 not_eol* 39);
