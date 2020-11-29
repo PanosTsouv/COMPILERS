@@ -101,11 +101,14 @@ Productions
 				{assert}tab* assert expression next_exp?|
 				{function_call_state}tab* function_call;
 
-	comparison ={notc}not_comparison|
-				{andc}comparison and not_comparison|
-				{orc}comparison or not_comparison;
+	comparison ={andc}and_comparison|
+				{orc}comparison or and_comparison;
 
-	not_comparison = not* comparison_final;
+	and_comparison = {notc}not_comparison|
+						{andc}and_comparison and not_comparison;
+
+	not_comparison = {final}comparison_final | 
+						{notc}not not_comparison;
 
 	comparison_final = {true} true|
 						{false} false|
