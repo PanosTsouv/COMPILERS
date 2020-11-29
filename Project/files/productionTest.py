@@ -11,7 +11,7 @@ def comparisonTesting():
 		print 3
 	if true and true and true:
 		print 3
-	if not x > 5 and y >= 4 and y <= 4 and x <= 10:
+	if not x > 5 and y >= 4 or y <= 4 and x <= 10:
 		print 3
 def expressionTesting(a = 0,b = 0,c = 0):
 	if x <3+2:
