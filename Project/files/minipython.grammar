@@ -1,3 +1,9 @@
+/*
+Παναγιώτης Τσουβελακάκης p3130212
+Φώτης Τσουβελακάκης p3130213
+Μιχαήλ Βαζαίος p3170013
+*/
+
 Package minipython;
 
 Helpers
@@ -65,9 +71,9 @@ Tokens
 	/*These are the ignored tokens*/
 	blank = (' ' | lf | cr);
 	line_comment = '#' not_eol* eol;
-	/*numbers, variable or function names and strings*/
-	/*Since there were no istructions in the Minipython BNF as to what is or isn't a number we followed python*/
-	/*So .9E-1 for example is a perfectly fine number. It is the number 0.09*/
+	/*numbers, variable or function names and strings
+	Since there were no istructions in the Minipython BNF as to what is or isn't a number we followed python
+	So .9E-1 for example is a perfectly fine number. It is the number 0.09*/
 	number = (digit+ | (digit* '.' digit+))(('e' | 'E') ('+' | '-')? digit+)?;
 	id = (letter | '_') (letter | '_' | digit)*;
 	string = ('"' not_eol* '"') | (39 not_eol* 39);
