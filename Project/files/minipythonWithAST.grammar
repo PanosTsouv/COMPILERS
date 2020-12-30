@@ -87,23 +87,23 @@ Productions
 	commands = {func_cmd} function{-> New commands.func_cmd( function )}|
 				{state_cmd}statement{-> New commands.state_cmd( statement )};
 
-	function = {func}def identifier l_par argument? r_par semi statement{-> New function.func( identifier.id, [argument], statement )};
+	function = {func}def identifier l_par argument? r_par semi statement{-> New function.func( identifier.expression, [argument], statement )};
 
-	argument = {arg}identifier eq_value? next_args*{-> New argument.arg( identifier.id, [eq_value.value], [next_args] )};
+	argument = {arg}identifier eq_value? next_args*{-> New argument.arg( identifier.expression, [eq_value.value], [next_args] )};
 
 	eq_value{-> value} = eq value{-> value}; /*helper for {arg} and {next_args} rules*/
 
-	next_args ={next_args} comma identifier eq_value?{-> New next_args.next_args( identifier.id, [eq_value.value] )}; /*helper for {arg} rule*/
+	next_args ={next_args} comma identifier eq_value?{-> New next_args.next_args( identifier.expression, [eq_value.value] )}; /*helper for {arg} rule*/
 
 	statement ={if}tab* if  comparison semi statement{-> New statement.if( comparison, statement )} |
 				{while}tab* while comparison semi statement{-> New statement.while( comparison, statement )} |
-				{for}tab* for [id1]:identifier in [id2]:identifier semi statement{-> New statement.for( id1.id, id2.id, statement )} |
+				{for}tab* for [id1]:identifier in [id2]:identifier semi statement{-> New statement.for( id1.expression, id2.expression, statement )} |
 				{return}tab* return expression{-> New statement.return( expression )} |
-				{assign}tab* id eq expression{-> New statement.assign( id, expression )} |
-				{minus_assign}tab* id minus_eq expression{-> New statement.minus_assign( id, expression )} |
-				{div_assign}tab* id div_eq expression{-> New statement.div_assign( id, expression )} |
+				{assign}tab* identifier eq expression{-> New statement.assign( identifier.expression, expression )} |
+				{minus_assign}tab* identifier minus_eq expression{-> New statement.minus_assign( identifier.expression, expression )} |
+				{div_assign}tab* identifier div_eq expression{-> New statement.div_assign( identifier.expression, expression )} |
 				{print}tab* print arglist{-> New statement.print( [arglist.expression] )} |
-				{array_assignment}tab* identifier l_br [exp_in_br]:expression r_br eq [exp_out_br]:expression{-> New statement.array_assignment( identifier.id, exp_in_br, exp_out_br )} |
+				{array_assignment}tab* identifier l_br [exp_in_br]:expression r_br eq [exp_out_br]:expression{-> New statement.array_assignment( identifier.expression, exp_in_br, exp_out_br )}|
 				{assert}tab* assert expression next_exp?{-> New statement.assert( [next_exp.expression] )} |
 				{function_call_state}tab* function_call{-> New statement.function_call_state( function_call )};
 
@@ -138,24 +138,24 @@ Productions
 			{power} power expon something{-> New expression.power( power.expression, something.expression )};
 
 	something{->expression} ={identifier}id{-> New expression.identifier( id )} |
-				{id_inside_br_exp}identifier l_br expression r_br{-> New expression.id_inside_br_exp( identifier.id, expression )} |
+				{id_inside_br_exp}identifier l_br expression r_br{-> New expression.id_inside_br_exp( identifier.expression, expression )} |
 				{function_call_exp}function_call{-> New expression.function_call_exp( function_call )} |
 				{value}value{-> New expression.value( value )} |
 				{par}l_par expression r_par {-> expression}|
 				{opens}open l_par [exp1]:expression comma [exp2]:expression r_par{-> New expression.opens( exp1, exp2 )} |
-				{types}type l_par identifier r_par{-> New expression.types( identifier.id )} |
+				{types}type l_par identifier r_par{-> New expression.types( identifier.expression )} |
 				{maxs}max l_par value next_value+ r_par{-> New expression.maxs( [next_value.value] )} |
 				{mins}min l_par value next_value+ r_par{-> New expression.mins( [next_value.value] )} |
 				{array}l_br arglist r_br{-> New expression.array( [arglist.expression] )};
 
 	next_value{-> value} = comma value{-> value}; /*helper for {min} and {max} rules*/
 						  
-	value =	{idfunctioncall}identifier dot function_call{-> New value.idfunctioncall( identifier.id, function_call )} |
+	value =	{idfunctioncall}identifier dot function_call{-> New value.idfunctioncall( identifier.expression, function_call )} |
 			{num} num{-> New value.num( num.number )} |
 			{string} string{-> New value.string( string )} |
 			{none} none{-> New value.none( none )};
 
-	function_call = {function_call} identifier l_par arglist? r_par{-> New function_call.function_call( identifier.id, [arglist.expression] )};
+	function_call = {function_call} identifier l_par arglist? r_par{-> New function_call.function_call( identifier.expression, [arglist.expression] )};
 
 	arglist{->expression*} = expression next_exp*{-> [expression next_exp.expression]};
 
@@ -163,7 +163,7 @@ Productions
 
 	num{-> number} = number{-> number};
 
-	identifier{-> id} = id{-> id};
+	identifier{-> expression} = id{-> New expression.identifier( id )};
 
 Abstract Syntax Tree
 	goal = commands*;
@@ -171,21 +171,21 @@ Abstract Syntax Tree
 	commands = {func_cmd} function|
 				{state_cmd}statement;
 
-	function = {func}id argument* statement;
+	function = {func}expression argument* statement;
 
-	argument = {arg}id value* next_args*;
+	argument = {arg}expression value* next_args*;
 
-    next_args ={next_args} id value*;
+    next_args ={next_args} expression value*;
 
 	statement = {if} comparison statement|
 				{while} comparison statement|
-				{for} [id1]:id [id2]:id statement|
+				{for} [id1]:expression [id2]:expression statement|
 				{return} expression |
-				{assign} id expression |
-				{minus_assign} id expression |
-				{div_assign} id expression |
+				{assign} [l]:expression [r]:expression |
+				{minus_assign} [l]:expression [r]:expression |
+				{div_assign} [l]:expression [r]:expression |
 				{print} expression* |
-				{array_assignment} id [exp_in_br]:expression [exp_out_br]:expression |
+				{array_assignment} expression [exp_in_br]:expression [exp_out_br]:expression |
 				{assert} expression* |
 				{function_call_state} function_call;
 
@@ -208,21 +208,21 @@ Abstract Syntax Tree
                     {modulo} [l]:expression [r]:expression |
                     {power} [l]:expression [r]:expression |
                     {identifier} id |
-                    {id_inside_br_exp} id expression |
+                    {id_inside_br_exp} [l]:expression [r]:expression |
                     {function_call_exp} function_call |
                     {value} value |
                     {opens}[exp1]:expression [exp2]:expression |
-                    {types}id |
+                    {types}expression |
                     {maxs}value* |
                     {mins}value* |
                     {array}expression*;
 
-    value =	{idfunctioncall}id function_call |
+    value =	{idfunctioncall}expression function_call |
 			{num} number |
 			{string} string |
 			{none} none;
 
-    function_call = {function_call} id expression*;
+    function_call = {function_call} [l]:expression [r]:expression*;
 
     
 	
