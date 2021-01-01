@@ -105,7 +105,7 @@ Productions
 				{print}tab* print arglist{-> New statement.print( [arglist.expression] )} |
 				{array_assignment}tab* identifier l_br [exp_in_br]:expression r_br eq [exp_out_br]:expression{-> New statement.array_assignment( identifier.expression, exp_in_br, exp_out_br )}|
 				{assert}tab* assert expression next_exp?{-> New statement.assert( [next_exp.expression] )} |
-				{function_call_state}tab* function_call{-> New statement.function_call_state( function_call )};
+				{function_call_state}tab* function_call{-> New statement.function_call_state( function_call.expression )};
 
 	comparison ={andc}and_comparison{-> and_comparison.comparison} |
 				{orc}comparison or and_comparison{-> New comparison.orc( comparison, and_comparison.comparison )};
@@ -139,7 +139,7 @@ Productions
 
 	something{->expression} ={identifier}identifier{-> identifier.expression} |
 				{id_inside_br_exp}identifier l_br expression r_br{-> New expression.id_inside_br_exp( identifier.expression, expression )} |
-				{function_call_exp}function_call{-> New expression.function_call_exp( function_call )} |
+				{function_call_exp}function_call{-> function_call.expression } |
 				{value}value{-> value.expression} |
 				{par}l_par expression r_par {-> expression}|
 				{opens}open l_par [exp1]:expression comma [exp2]:expression r_par{-> New expression.opens( exp1, exp2 )} |
@@ -150,12 +150,12 @@ Productions
 
 	next_value{-> expression} = comma value{-> value.expression}; /*helper for {min} and {max} rules*/
 						  
-	value{-> expression} =	{idfunctioncall}identifier dot function_call{-> New expression.idfunctioncall( identifier.expression, function_call )} |
+	value{-> expression} =	{idfunctioncall}identifier dot function_call{-> New expression.idfunctioncall( identifier.expression, function_call.expression )} |
 			{num} num{-> num.expression} |
 			{string} string{-> New expression.string( string )} |
 			{none} none{-> New expression.none( none )};
 
-	function_call = {function_call} identifier l_par arglist? r_par{-> New function_call.function_call( identifier.expression, [arglist.expression] )};
+	function_call{-> expression} = {function_call} identifier l_par arglist? r_par{-> New expression.function_call( identifier.expression, [arglist.expression] )};
 
 	arglist{->expression*} = expression next_exp*{-> [expression next_exp.expression]};
 
@@ -175,7 +175,7 @@ Abstract Syntax Tree
 
 	argument = {arg}[l]:expression [r]:expression* next_args*;
 
-    next_args ={next_args} [l]:expression [r]:expression*;
+	next_args ={next_args} [l]:expression [r]:expression*;
 
 	statement = {if} comparison statement|
 				{while} comparison statement|
@@ -187,7 +187,7 @@ Abstract Syntax Tree
 				{print} expression* |
 				{array_assignment} expression [exp_in_br]:expression [exp_out_br]:expression |
 				{assert} expression* |
-				{function_call_state} function_call;
+				{function_call_state} expression;
 
 	comparison = {orc} [l]:comparison [r]:comparison |
 					{andc} [l]:comparison [r]:comparison |
@@ -201,26 +201,24 @@ Abstract Syntax Tree
 					{equal} [lpar]:expression [rpar]:expression|
 					{notequal} [lpar]:expression [rpar]:expression;
 
-    expression = {addition} [l]:expression [r]:expression |
-                    {subtraction} [l]:expression [r]:expression |
-                    {multiplication} [l]:expression [r]:expression |
-                    {division} [l]:expression [r]:expression |
-                    {modulo} [l]:expression [r]:expression |
-                    {power} [l]:expression [r]:expression |
-                    {identifier} id |
-                    {id_inside_br_exp} [l]:expression [r]:expression |
-                    {function_call_exp} function_call |
-                    {idfunctioncall}expression function_call |
+	expression = {addition} [l]:expression [r]:expression |
+					{subtraction} [l]:expression [r]:expression |
+					{multiplication} [l]:expression [r]:expression |
+					{division} [l]:expression [r]:expression |
+					{modulo} [l]:expression [r]:expression |
+					{power} [l]:expression [r]:expression |
+					{identifier} id |
+					{id_inside_br_exp} [l]:expression [r]:expression |
+					{function_call} [l]:expression [r]:expression* |
+					{idfunctioncall}[l]:expression [r]:expression |
 					{num} number |
 					{string} string |
 					{none} none |
-                    {opens}[exp1]:expression [exp2]:expression |
-                    {types}expression |
-                    {maxs} [l]:expression [r]:expression* |
-                    {mins} [l]:expression [r]:expression* |
-                    {array}expression*;
-
-    function_call = {function_call} [l]:expression [r]:expression*;
+					{opens}[exp1]:expression [exp2]:expression |
+					{types}expression |
+					{maxs} [l]:expression [r]:expression* |
+					{mins} [l]:expression [r]:expression* |
+					{array}expression*;
 
     
 	
