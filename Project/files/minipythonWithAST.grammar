@@ -87,13 +87,13 @@ Productions
 	commands = {func_cmd} function{-> New commands.func_cmd( function )}|
 				{state_cmd}statement{-> New commands.state_cmd( statement )};
 
-	function = {func}def identifier l_par argument? r_par semi statement{-> New function.func( identifier.expression, [argument], statement )};
+	function = {func}def identifier l_par argument? r_par semi statement{-> New function.def( identifier.expression, [argument], statement )};
 
-	argument = {arg}identifier eq_value? next_args*{-> New argument.arg( identifier.expression, [eq_value.expression], [next_args] )};
+	argument = {arg}identifier eq_value? next_args*{-> New argument.first( identifier.expression, [eq_value.expression], [next_args] )};
 
 	eq_value{-> expression} = eq value{-> value.expression}; /*helper for {arg} and {next_args} rules*/
 
-	next_args ={next_args} comma identifier eq_value?{-> New next_args.next_args( identifier.expression, [eq_value.expression] )}; /*helper for {arg} rule*/
+	next_args ={next_args} comma identifier eq_value?{-> New next_args.after_first_arg( identifier.expression, [eq_value.expression] )}; /*helper for {arg} rule*/
 
 	statement ={if}tab* if  comparison semi statement{-> New statement.if( comparison, statement )} |
 				{while}tab* while comparison semi statement{-> New statement.while( comparison, statement )} |
@@ -103,8 +103,8 @@ Productions
 				{minus_assign}tab* identifier minus_eq expression{-> New statement.minus_assign( identifier.expression, expression )} |
 				{div_assign}tab* identifier div_eq expression{-> New statement.div_assign( identifier.expression, expression )} |
 				{print}tab* print arglist{-> New statement.print( [arglist.expression] )} |
-				{array_assignment}tab* identifier l_br [exp_in_br]:expression r_br eq [exp_out_br]:expression{-> New statement.array_assignment( identifier.expression, exp_in_br, exp_out_br )}|
-				{assert}tab* assert expression next_exp?{-> New statement.assert( [next_exp.expression] )} |
+				{array_assignment}tab* identifier l_br [exp_in_br]:expression r_br eq [exp_after_eq]:expression{-> New statement.array_assignment( identifier.expression, exp_in_br, exp_after_eq )}|
+				{assert}tab* assert expression next_exp?{-> New statement.assert( expression, [next_exp.expression] )} |
 				{function_call_state}tab* function_call{-> New statement.function_call_state( function_call.expression )};
 
 	comparison ={andc}and_comparison{-> and_comparison.comparison} |
@@ -118,12 +118,12 @@ Productions
 
 	comparison_final{->comparison} = {true} true{-> New comparison.true()} |
 						{false} false{-> New comparison.true()} |
-					 	{lessc} [lpar]:expression less [rpar]:expression{-> New comparison.lessc( lpar, rpar )} |
-						{lessequalc} [lpar]:expression less_equal [rpar]:expression{-> New comparison.lessequalc( lpar, rpar )} |
-					 	{greatc}[lpar]:expression greater [rpar]:expression{-> New comparison.greatc( lpar, rpar )} |
-						{greatequalc} [lpar]:expression greater_equal [rpar]:expression{-> New comparison.greatequalc( lpar, rpar )} |
-						{equal} [lpar]:expression equal [rpar]:expression{-> New comparison.equal( lpar, rpar )} |
-						{notequal} [lpar]:expression not_equal [rpar]:expression{-> New comparison.notequal( lpar, rpar )};
+					 	{lessc} [left_exp]:expression less [right_exp]:expression{-> New comparison.lessc( left_exp, right_exp )} |
+						{lessequalc} [left_exp]:expression less_equal [right_exp]:expression{-> New comparison.lessequalc( left_exp, right_exp )} |
+					 	{greatc}[left_exp]:expression greater [right_exp]:expression{-> New comparison.greatc( left_exp, right_exp )} |
+						{greatequalc} [left_exp]:expression greater_equal [right_exp]:expression{-> New comparison.greatequalc( left_exp, right_exp )} |
+						{equal} [left_exp]:expression equal [right_exp]:expression{-> New comparison.equal( left_exp, right_exp )} |
+						{notequal} [left_exp]:expression not_equal [right_exp]:expression{-> New comparison.notequal( left_exp, right_exp )};
 
 	expression = {multiplication} multiplication{-> multiplication.expression} |
 					{addition} expression plus multiplication{-> New expression.addition( expression, multiplication.expression )} |
@@ -171,53 +171,53 @@ Abstract Syntax Tree
 	commands = {func_cmd} function|
 				{state_cmd}statement;
 
-	function = {func}expression argument* statement;
+	function = {def}expression argument* statement;
 
-	argument = {arg}[l]:expression [r]:expression* next_args*;
+	argument = {first}[id]:expression [value]:expression* next_args*;
 
-	next_args ={next_args} [l]:expression [r]:expression*;
+	next_args ={after_first_arg} [id]:expression [value]:expression*;
 
 	statement = {if} comparison statement|
 				{while} comparison statement|
 				{for} [id1]:expression [id2]:expression statement|
 				{return} expression |
-				{assign} [l]:expression [r]:expression |
-				{minus_assign} [l]:expression [r]:expression |
-				{div_assign} [l]:expression [r]:expression |
+				{assign} [id_exp]:expression [exp]:expression |
+				{minus_assign} [id_exp]:expression [exp]:expression |
+				{div_assign} [id_exp]:expression [exp]:expression |
 				{print} expression* |
-				{array_assignment} expression [exp_in_br]:expression [exp_out_br]:expression |
-				{assert} expression* |
+				{array_assignment} expression [exp_in_br]:expression [exp_after_eq]:expression |
+				{assert} [exp]:expression [message]:expression* |
 				{function_call_state} expression;
 
-	comparison = {orc} [l]:comparison [r]:comparison |
-					{andc} [l]:comparison [r]:comparison |
+	comparison = {orc} [left_comp]:comparison [right_comp]:comparison |
+					{andc} [left_comp]:comparison [right_comp]:comparison |
 					{notc} comparison |
 					{true} |
 					{false} |
-					{lessc} [lpar]:expression [rpar]:expression|
-					{lessequalc} [lpar]:expression [rpar]:expression|
-					{greatc}[lpar]:expression [rpar]:expression|
-					{greatequalc} [lpar]:expression [rpar]:expression|
-					{equal} [lpar]:expression [rpar]:expression|
-					{notequal} [lpar]:expression [rpar]:expression;
+					{lessc} [left_exp]:expression [right_exp]:expression|
+					{lessequalc} [left_exp]:expression [right_exp]:expression|
+					{greatc}[left_exp]:expression [right_exp]:expression|
+					{greatequalc} [left_exp]:expression [right_exp]:expression|
+					{equal} [left_exp]:expression [right_exp]:expression|
+					{notequal} [left_exp]:expression [right_exp]:expression;
 
-	expression = {addition} [l]:expression [r]:expression |
-					{subtraction} [l]:expression [r]:expression |
-					{multiplication} [l]:expression [r]:expression |
-					{division} [l]:expression [r]:expression |
-					{modulo} [l]:expression [r]:expression |
-					{power} [l]:expression [r]:expression |
+	expression = {addition} [left_exp]:expression [right_exp]:expression |
+					{subtraction} [left_exp]:expression [right_exp]:expression |
+					{multiplication} [left_exp]:expression [right_exp]:expression |
+					{division} [left_exp]:expression [right_exp]:expression |
+					{modulo} [left_exp]:expression [right_exp]:expression |
+					{power} [left_exp]:expression [right_exp]:expression |
 					{identifier} id |
-					{id_inside_br_exp} [l]:expression [r]:expression |
-					{function_call} [l]:expression [r]:expression* |
-					{idfunctioncall}[l]:expression [r]:expression |
+					{id_inside_br_exp} [id_exp]:expression [exp_in_br]:expression |
+					{function_call} [id_exp]:expression [arglist_exps]:expression* |
+					{idfunctioncall}[id_exp]:expression [function_call]:expression |
 					{num} number |
 					{string} string |
 					{none} none |
 					{opens}[exp1]:expression [exp2]:expression |
 					{types}expression |
-					{maxs} [l]:expression [r]:expression* |
-					{mins} [l]:expression [r]:expression* |
+					{maxs} [value]:expression [next_values]:expression* |
+					{mins} [value]:expression [next_values]:expression* |
 					{array}expression*;
 
     
