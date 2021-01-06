@@ -122,6 +122,11 @@ public class MyVisitor extends DepthFirstAdapter
 		fData.setArgs(nextArgsSize);
 	}
 
+	public void outAFirstArgument(AFirstArgument node)
+	{
+		initializeArgsType((AIdentifierExpression)node.getId(), node.getValue(), true);
+	}
+
 	public void inAAfterFirstArgNextArgs(AAfterFirstArgNextArgs node)
 	{
 		/*
@@ -138,6 +143,11 @@ public class MyVisitor extends DepthFirstAdapter
 		int defaultValueOfNextArgs = node.getValue().size();
 		defaultValueOfNextArgs = defaultValueOfNextArgs + fData.getDefaultArgs();
 		fData.setDefaultArgs(defaultValueOfNextArgs);
+	}
+
+	public void outAAfterFirstArgNextArgs(AAfterFirstArgNextArgs node)
+	{
+		initializeArgsType((AIdentifierExpression)node.getId(), node.getValue(), false);
 	}
 
 	public void inAFunctionCallExpression(AFunctionCallExpression node)
@@ -171,6 +181,50 @@ public class MyVisitor extends DepthFirstAdapter
 				return;
 			}
 			print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function " + fCallname +" is not defined");
+		}
+	}
+
+	public void initializeArgsType(AIdentifierExpression id ,LinkedList value, boolean firstArgFlag)
+	{
+		Hashtable<String, Object> firstArg = new Hashtable<>();
+		firstArg.put("argName", id.getId().toString());
+		if(value.size() == 1)
+		{
+			if(value.get(0) instanceof ANumExpression)
+			{
+				firstArg.put("type", "INTEGER_LITERAL");
+			}
+			else if(value.get(0) instanceof AStringExpression)
+			{
+				firstArg.put("type", "STRING_LITERAL");
+			}
+			else if(value.get(0) instanceof ANoneExpression)
+			{
+				firstArg.put("type", "None");
+			}
+			else if(value.get(0) instanceof AIdfunctioncallExpression)
+			{
+				String nameOfFuctionCall = ((AIdentifierExpression)((AFunctionCallExpression)((AIdfunctioncallExpression)value.get(0)).getFunctionCall()).getIdExp()).getId().toString().trim();
+				if(symtable.get(nameOfFuctionCall + "Call") != null)
+				{
+					firstArg.put("type", ((Hashtable<String, Object>)symtable.get(nameOfFuctionCall + "Call")).get("returnType"));
+				}
+				else
+				{
+					firstArg.put("type", "Unknown");
+				}
+			}
+		}
+		else
+		{
+			firstArg.put("type", "Unknown");
+		}
+		if(firstArgFlag)
+		{
+			fData.getArgsInfo().add(0, firstArg);;
+		}
+		else{
+			fData.getArgsInfo().add(firstArg);
 		}
 	}
 
