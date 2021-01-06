@@ -10,14 +10,14 @@ public class MyVisitor extends DepthFirstAdapter
 {
 	private Hashtable symtable;
 	private String currentFuction = "";
-	Hashtable<String, Object> fData;
+	private Function fData;
 
 	MyVisitor(Hashtable symtable) 
 	{
 		this.symtable = symtable;
 	}
 	
-    public void inADefFunction(ADefFunction node)
+	public void inADefFunction(ADefFunction node)
 	{
 		/*
 			This method create fData Hashtable which contains all info we need about current function
@@ -32,11 +32,11 @@ public class MyVisitor extends DepthFirstAdapter
 					Return the first argument of function - Could be empty or size 1
 		*/
 		String fName = ((AIdentifierExpression)node.getExpression()).getId().toString().trim();
-		fData = new Hashtable<>();
+		fData = new Function();
 		currentFuction = fName;
 		int args = node.getArgument().size();
-		fData.put("args", args);
-		fData.put("defaultArgs", 0);
+		fData.setArgs(args);
+		fData.setDefaultArgs(0);
 	}
 
 	public void outADefFunction(ADefFunction node)
@@ -62,26 +62,26 @@ public class MyVisitor extends DepthFirstAdapter
 				getExpression() : PExpression object
 					PExpression object can be cast to all alternatives (AIdentifierExpression is PExpression)
 		*/
-		ArrayList<Hashtable<String, Object>> allFuctionWithSameName;
+		ArrayList<Function> allFuctionWithSameName;
 		int line = ((TId)((AIdentifierExpression)node.getExpression()).getId()).getLine();
 		int pos = ((TId)((AIdentifierExpression)node.getExpression()).getId()).getPos();
 		if(!symtable.containsKey(currentFuction))
 		{
 			allFuctionWithSameName = new ArrayList<>();
 			symtable.put(currentFuction, allFuctionWithSameName);
-			fData.put("name", currentFuction + allFuctionWithSameName.size());
+			fData.setName(currentFuction + allFuctionWithSameName.size());
 			allFuctionWithSameName.add(fData);
 		}
 		else
 		{
-			allFuctionWithSameName = (ArrayList<Hashtable<String,Object>>)symtable.get(currentFuction);
+			allFuctionWithSameName = (ArrayList<Function>)symtable.get(currentFuction);
 
-			for(Hashtable<String,Object> function : allFuctionWithSameName)
+			for(Function function : allFuctionWithSameName)
 			{
-				int currentFunctionArgs = (int)fData.get("args");
-				int currentFunctionDefaultArgs = (int)fData.get("defaultArgs");
-				int fuctionArgs = (int)function.get("args");
-				int fuctionDefaultArgs = (int)function.get("defaultArgs");
+				int currentFunctionArgs = fData.getArgs();
+				int currentFunctionDefaultArgs = fData.getDefaultArgs();
+				int fuctionArgs = function.getArgs();
+				int fuctionDefaultArgs = function.getDefaultArgs();
 				if((currentFunctionArgs >= (fuctionArgs - fuctionDefaultArgs) && currentFunctionArgs <= fuctionArgs)
 					|| (fuctionArgs >= (currentFunctionArgs - currentFunctionDefaultArgs) && fuctionArgs <= currentFunctionArgs))
 				{
@@ -89,7 +89,7 @@ public class MyVisitor extends DepthFirstAdapter
 					return;
 				}
 			}
-			fData.put("name", currentFuction + allFuctionWithSameName.size());
+			fData.setName(currentFuction + allFuctionWithSameName.size());
 			allFuctionWithSameName.add(fData);
 		}
 		currentFuction = "";
@@ -115,11 +115,11 @@ public class MyVisitor extends DepthFirstAdapter
 					Return the value of an arg - Could be empty or size 1
 		*/
 		int defaultArgs = node.getValue().size();
-		defaultArgs = defaultArgs + (int)fData.get("defaultArgs");
-		fData.put("defaultArgs", defaultArgs);
+		defaultArgs = defaultArgs + fData.getDefaultArgs();
+		fData.setDefaultArgs(defaultArgs);
 		LinkedList nextArgs = node.getNextArgs();
-		int nextArgsSize = (int)fData.get("args") + nextArgs.size();
-		fData.put("args", nextArgsSize);
+		int nextArgsSize = fData.getArgs() + nextArgs.size();
+		fData.setArgs(nextArgsSize);
 	}
 
 	public void inAAfterFirstArgNextArgs(AAfterFirstArgNextArgs node)
@@ -136,8 +136,8 @@ public class MyVisitor extends DepthFirstAdapter
 					Return the value of an arg - Could be empty or size 1
 		*/
 		int defaultValueOfNextArgs = node.getValue().size();
-		defaultValueOfNextArgs = defaultValueOfNextArgs + (int)fData.get("defaultArgs");
-		fData.put("defaultArgs", defaultValueOfNextArgs);
+		defaultValueOfNextArgs = defaultValueOfNextArgs + fData.getDefaultArgs();
+		fData.setDefaultArgs(defaultValueOfNextArgs);
 	}
 
 	public void inAFunctionCallExpression(AFunctionCallExpression node)
@@ -148,12 +148,12 @@ public class MyVisitor extends DepthFirstAdapter
 		String fCallname = fCallTId.toString().trim();
 		if(symtable.containsKey(fCallname))
 		{
-			for(Hashtable<String,Object> function : (ArrayList<Hashtable<String,Object>>)symtable.get(fCallname))
+			for(Function function : (ArrayList<Function>)symtable.get(fCallname))
 			{
-				if(args.size() <= (int)function.get("args") && args.size() >= ((int)function.get("args") - (int)function.get("defaultArgs")))
+				if(args.size() <= function.getArgs() && args.size() >= (function.getArgs() - function.getDefaultArgs()))
 				{
 					Hashtable<String, Object> fCallData = new Hashtable<>();
-					fCallData.put("functionName", function.get("name"));
+					fCallData.put("functionName", function.getName());
 					fCallData.put("returnType", "");
 					symtable.put(fCallname + "Call", fCallData);
 					findFunction = true;
