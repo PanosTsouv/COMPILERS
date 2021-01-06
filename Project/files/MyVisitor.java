@@ -11,6 +11,7 @@ public class MyVisitor extends DepthFirstAdapter
 	private Hashtable symtable;
 	private String currentFuction = "";
 	private Function fData;
+	private boolean errorExist = false;
 
 	MyVisitor(Hashtable symtable) 
 	{
@@ -86,6 +87,7 @@ public class MyVisitor extends DepthFirstAdapter
 					|| (fuctionArgs >= (currentFunctionArgs - currentFunctionDefaultArgs) && fuctionArgs <= currentFunctionArgs))
 				{
 					print("[" + line + "," + pos + "]" + ": " +" Function " + currentFuction +" is already defined");
+					errorExist = true;
 					return;
 				}
 			}
@@ -172,6 +174,7 @@ public class MyVisitor extends DepthFirstAdapter
 			if(!findFunction)
 			{
 				print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function " + fCallname +" is defined with different number of arguments");
+				errorExist = true;
 			}
 		}
 		else
@@ -181,6 +184,7 @@ public class MyVisitor extends DepthFirstAdapter
 				return;
 			}
 			print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function " + fCallname +" is not defined");
+			errorExist = true;
 		}
 	}
 
@@ -231,5 +235,10 @@ public class MyVisitor extends DepthFirstAdapter
 	public void print(Object objectToPrint)
 	{
 		System.out.println(objectToPrint);
+	}
+
+	public boolean getErrorExist()
+	{
+		return this.errorExist;
 	}
 }
