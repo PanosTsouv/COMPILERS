@@ -21,7 +21,7 @@ public class MyVisitor extends DepthFirstAdapter
 	public void inADefFunction(ADefFunction node)
 	{
 		/*
-			This method create fData Hashtable which contains all info we need about current function
+			This method create fData Function object which contains all info we need about current function
 
 			fname : String
 				The name of defined function
@@ -30,7 +30,7 @@ public class MyVisitor extends DepthFirstAdapter
 				getExpression() : PExpression object
 					PExpression object can be cast to all alternatives (AIdentifierExpression is PExpression)
 				getArgument() : LinkedList with AFirstArgument object (Exist in ADefFunction class)
-					Return the first argument of function - Could be empty or size 1
+					Return the arguments-default values of function in a raw - Could be empty or size 1
 		*/
 		String fName = ((AIdentifierExpression)node.getExpression()).getId().toString().trim();
 		fData = new Function();
@@ -43,21 +43,21 @@ public class MyVisitor extends DepthFirstAdapter
 	public void outADefFunction(ADefFunction node)
 	{
 		/*
-			This method compare the args of current function with the args of fuction with the same name 
-			If a fuction with the same name exist and has same args - print an error message else add Data of this fuction
+			This method compare the args of current function with the args of function with the same name 
+			If a function with the same name exist and has same args - print an error message else add Data of this function
 
 			allFuctionWithSameName : String
-				All fuction with same name and different args have already visited
+				All functions with same name and different args have already visited
 			currentFunctionArgs : int
-				The number of args which check fuction contains
+				The number of args which check function contains
 			currentFunctionDefaultArgs : int
 				The number of default args which check fuction contains
 			line, pos : int
 				The position where function is defined
 			fuctionArgs : int
-				The number of args which fuction with same name has
+				The number of args which function with same name has
 			fuctionDefaultArgs : int
-				The number of default args which fuction with same name has
+				The number of default args which function with same name has
 
 			Used Methods:
 				getExpression() : PExpression object
@@ -100,8 +100,8 @@ public class MyVisitor extends DepthFirstAdapter
 	public void inAFirstArgument(AFirstArgument node)
 	{
 		/*
-			Check if first argument have default value - add +1 or 0 to fData(defaultAgs key)
-			Check the number of children(NextArgs) - add +number to fData(args key)
+			Check if first argument have default value - add +1 or 0 to fData's defaultValue attribute
+			Check the number of children(NextArgs) - add +number to fData's args attribute
 
 			nextArgsSize : int
 				The number of all next arguments(with default and non default values)
@@ -112,7 +112,7 @@ public class MyVisitor extends DepthFirstAdapter
 
 			Used Methods:
 				getNextArgs() : LinkedList with AAfterFirstArgNextArgs objects
-					Return all next args after first arg - Could be gteater or equal than 0
+					Return all next args after first arg - Could be greater or equal than 0
 				getValue() : LinkedList with default values
 					Return the value of an arg - Could be empty or size 1
 		*/
@@ -132,7 +132,7 @@ public class MyVisitor extends DepthFirstAdapter
 	public void inAAfterFirstArgNextArgs(AAfterFirstArgNextArgs node)
 	{
 		/*
-			Check if next argument have default value - add +1 or 0 to fData(defaultAgs key)
+			Check if next argument have default value - add +1 or 0 to fData's defaultValue attribute
 
 			Variables:
 				defaultValueOfNextArgs : int
@@ -154,6 +154,32 @@ public class MyVisitor extends DepthFirstAdapter
 
 	public void inAFunctionCallExpression(AFunctionCallExpression node)
 	{
+		/*
+			Check if the function name of the function call exists
+			If exists then check the number of attributes with the list of all functions with same name
+			If a function with same name and same attributes doesn't exist then print an error message
+			Example:
+				function y(a, b = 0){} and the function call y(1)
+				-args of define function are 2 and default args are 1
+				-args of function call are 1
+				if 1<=2 and 1 >= 2 - 1 then the function call is right.Is true
+
+			Variables:
+				findFunction : boolean
+					A helper flag that show if a function with same name and same args exists
+				args : LinkedList
+					Contains all args from function call
+				fCallTId : TId
+					The identidier objct
+				fCallname : String
+					The name of function call
+
+			Used Methods:
+				getArglistExps() : LinkedList
+					Return a list the args of function call
+				getIdExp() : PExpression
+					Return a PExpression which here is an AIdentifierExpression
+		*/
 		boolean findFunction = false;
 		LinkedList args = node.getArglistExps();
 		TId fCallTId = ((AIdentifierExpression)node.getIdExp()).getId();
@@ -190,6 +216,11 @@ public class MyVisitor extends DepthFirstAdapter
 
 	public void initializeArgsType(AIdentifierExpression id ,LinkedList value, boolean firstArgFlag)
 	{
+		/*
+			This method checks if an argument has default value and finds the type of this argument
+			If argument doesn't have default value -> type is Unknown
+			Store the argument and the type of it
+		*/
 		Hashtable<String, Object> firstArg = new Hashtable<>();
 		firstArg.put("argName", id.getId().toString());
 		if(value.size() == 1)
