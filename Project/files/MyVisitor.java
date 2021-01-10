@@ -17,7 +17,7 @@ public class MyVisitor extends DepthFirstAdapter
 	{
 		this.symtable = symtable;
 	}
-	
+
 	public void inADefFunction(ADefFunction node)
 	{
 		/*
@@ -63,21 +63,21 @@ public class MyVisitor extends DepthFirstAdapter
 				getExpression() : PExpression object
 					PExpression object can be cast to all alternatives (AIdentifierExpression is PExpression)
 		*/
-		ArrayList<Function> allFuctionWithSameName;
+		Hashtable<String, Function> allFuctionWithSameName;
 		int line = ((TId)((AIdentifierExpression)node.getExpression()).getId()).getLine();
 		int pos = ((TId)((AIdentifierExpression)node.getExpression()).getId()).getPos();
 		if(!symtable.containsKey(currentFuction))
 		{
-			allFuctionWithSameName = new ArrayList<>();
+			allFuctionWithSameName = new Hashtable<>();
 			symtable.put(currentFuction, allFuctionWithSameName);
-			fData.setName(currentFuction + allFuctionWithSameName.size());
-			allFuctionWithSameName.add(fData);
+			fData.setName(currentFuction +  line + pos);
+			allFuctionWithSameName.put(currentFuction +  line + pos, fData);
 		}
 		else
 		{
-			allFuctionWithSameName = (ArrayList<Function>)symtable.get(currentFuction);
+			allFuctionWithSameName = (Hashtable<String, Function>)symtable.get(currentFuction);
 
-			for(Function function : allFuctionWithSameName)
+			for(Function function : allFuctionWithSameName.values())
 			{
 				int currentFunctionArgs = fData.getArgs();
 				int currentFunctionDefaultArgs = fData.getDefaultArgs();
@@ -91,8 +91,12 @@ public class MyVisitor extends DepthFirstAdapter
 					return;
 				}
 			}
-			fData.setName(currentFuction + allFuctionWithSameName.size());
-			allFuctionWithSameName.add(fData);
+			fData.setName(currentFuction + line + pos);
+			allFuctionWithSameName.put(currentFuction +  line + pos, fData);
+		}
+		if(node.getStatement() instanceof AReturnStatement)
+		{
+			fData.setReturnStatement((AReturnStatement)node.getStatement());
 		}
 		currentFuction = "";
 	}
@@ -186,7 +190,7 @@ public class MyVisitor extends DepthFirstAdapter
 		String fCallname = fCallTId.toString().trim();
 		if(symtable.containsKey(fCallname))
 		{
-			for(Function function : (ArrayList<Function>)symtable.get(fCallname))
+			for(Function function : ((Hashtable<String, Function>)symtable.get(fCallname)).values())
 			{
 				if(args.size() <= function.getArgs() && args.size() >= (function.getArgs() - function.getDefaultArgs()))
 				{
@@ -222,7 +226,7 @@ public class MyVisitor extends DepthFirstAdapter
 			Store the argument and the type of it
 		*/
 		Hashtable<String, Object> firstArg = new Hashtable<>();
-		firstArg.put("argName", id.getId().toString());
+		firstArg.put("argName", id.getId().toString().trim());
 		if(value.size() == 1)
 		{
 			if(value.get(0) instanceof ANumExpression)
