@@ -1,11 +1,14 @@
 import java.util.ArrayList;
 import java.util.Hashtable;
 
+import minipython.node.AReturnStatement;
+
 public class Function {
     private String name;
     private int args;
     private int defaultArgs;
     private ArrayList<Hashtable<String, Object>> argsInfo;
+    private AReturnStatement returnStatement;
 
     public Function()
     {
@@ -13,6 +16,7 @@ public class Function {
         this.args = 0;
         this.defaultArgs = 0;
         this.argsInfo = new ArrayList<>();
+        this.returnStatement = null;
     }
 
     public String getName()
@@ -35,6 +39,11 @@ public class Function {
         return this.argsInfo;
     }
 
+    public AReturnStatement getReturnStatement()
+    {
+        return this.returnStatement;
+    }
+
     public void setName(String name)
     {
         this.name = name;
@@ -53,6 +62,11 @@ public class Function {
     public void setArgsInfo(ArrayList<Hashtable<String, Object>> argsInfo)
     {
         this.argsInfo = argsInfo;
+    }
+
+    public void setReturnStatement(AReturnStatement returnStatement)
+    {
+        this.returnStatement = returnStatement;
     }
 
     @Override
