@@ -2,6 +2,8 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Stack;
 
+import javax.lang.model.util.ElementScanner6;
+
 import minipython.node.*;
 import minipython.analysis.DepthFirstAdapter;
 
@@ -47,8 +49,31 @@ public class MyVisitor2 extends DepthFirstAdapter
 	{
         if (symtable.containsKey(key))
 		{
-            symtable.put(key, getExpressionType(node.getExp()));
+            String type = getExpressionType(node.getExp());
+            if(symtable.get(key).equals("Unknown"))
+            {
+                symtable.put(key, getExpressionType(node.getExp()));
+            }
+            else if(!symtable.get(key).equals(type))
+            {
+                if(!symtable.get(key).equals("Error") && !type.equals("Error") && !type.equals("Unknown"))
+                    print("In line " + ((AIdentifierExpression)node.getIdExp()).getId().getLine() + " : " + "Can't assign " + type + " to a variable of type " + (String)symtable.get(key));
+            }     
         }
+    }
+
+    public void outAMinusAssignStatement(AMinusAssignStatement node)
+    {
+        PExpression left = node.getIdExp();
+        PExpression right = node.getExp();
+        getType(left, right, null);
+    }
+
+    public void outADivAssignStatement(ADivAssignStatement node)
+    {
+        PExpression left = node.getIdExp();
+        PExpression right = node.getExp();
+        getType(left, right, null);
     }
 
     public void inAIdentifierExpression(AIdentifierExpression node)
