@@ -14,6 +14,8 @@ Helpers
 	all = [0..127];
 	eol = lf | cr | cr lf ;
 	not_eol = [all - [cr + lf]];
+	not_eol_without_double_quote = [not_eol - 34];
+	not_eol_without_single_quote = [not_eol - 39];
 
 Tokens
 	tab = 9;
@@ -76,7 +78,9 @@ Tokens
 	So .9E-1 for example is a perfectly fine number. It is the number 0.09*/
 	number = (digit+ | (digit* '.' digit+))(('e' | 'E') ('+' | '-')? digit+)?;
 	id = (letter | '_') (letter | '_' | digit)*;
-	string = ('"' not_eol* '"') | (39 not_eol* 39);
+	string = ('"' not_eol_without_double_quote* '"') | (39 not_eol_without_single_quote* 39) |
+			('"' '"' '"' not_eol* '"' '"' '"') | (39 39 39 not_eol* 39 39 39) | ('"' (not_eol_without_double_quote | 92 34)* '"') |
+			(39 (not_eol_without_double_quote | 92 39)* 39);
 	
 Ignored Tokens
 	blank, line_comment;
