@@ -86,7 +86,7 @@ public class MyVisitor extends DepthFirstAdapter
 				if((currentFunctionArgs >= (fuctionArgs - fuctionDefaultArgs) && currentFunctionArgs <= fuctionArgs)
 					|| (fuctionArgs >= (currentFunctionArgs - currentFunctionDefaultArgs) && fuctionArgs <= currentFunctionArgs))
 				{
-					print("[" + line + "," + pos + "]" + ": " +" Function " + currentFuction +" is already defined");
+					print("[" + line + "," + pos + "]" + ": " +" Function '" + currentFuction +"' is already defined");
 					errorExist = true;
 					return;
 				}
@@ -196,14 +196,16 @@ public class MyVisitor extends DepthFirstAdapter
 				{
 					Hashtable<String, Object> fCallData = new Hashtable<>();
 					fCallData.put("functionName", function.getName());
-					fCallData.put("returnType", "");
-					symtable.put(fCallname + "Call", fCallData);
+					fCallData.put("returnType", "Unknown");
+					fCallData.put("line", fCallTId.getLine());
+					fCallData.put("pos", fCallTId.getPos());
+					symtable.put(fCallname + "Call" + fCallTId.getLine() + fCallTId.getPos(), fCallData);
 					findFunction = true;
 				}
 			}
 			if(!findFunction)
 			{
-				print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function " + fCallname +" is defined with different number of arguments");
+				print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function '" + fCallname +"' is defined with different number of arguments");
 				errorExist = true;
 			}
 		}
@@ -213,7 +215,7 @@ public class MyVisitor extends DepthFirstAdapter
 			{
 				return;
 			}
-			print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function " + fCallname +" is not defined");
+			print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function '" + fCallname +"' is not defined");
 			errorExist = true;
 		}
 	}
@@ -243,10 +245,11 @@ public class MyVisitor extends DepthFirstAdapter
 			}
 			else if(value.get(0) instanceof AIdfunctioncallExpression)
 			{
-				String nameOfFuctionCall = ((AIdentifierExpression)((AFunctionCallExpression)((AIdfunctioncallExpression)value.get(0)).getFunctionCall()).getIdExp()).getId().toString().trim();
-				if(symtable.get(nameOfFuctionCall + "Call") != null)
+				TId fCallTId = ((AIdentifierExpression)((AFunctionCallExpression)((AIdfunctioncallExpression)value.get(0)).getFunctionCall()).getIdExp()).getId();
+				String nameOfFuctionCall = fCallTId.toString().trim();
+				if(symtable.get(nameOfFuctionCall + "Call" + fCallTId.getLine() + fCallTId.getPos()) != null)
 				{
-					firstArg.put("type", ((Hashtable<String, Object>)symtable.get(nameOfFuctionCall + "Call")).get("returnType"));
+					firstArg.put("type", ((Hashtable<String, Object>)symtable.get(nameOfFuctionCall + "Call" + fCallTId.getLine() + fCallTId.getPos())).get("returnType"));
 				}
 				else
 				{
