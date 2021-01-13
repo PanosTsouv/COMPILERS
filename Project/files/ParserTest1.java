@@ -19,7 +19,10 @@ public class ParserTest1
 
       Hashtable symtable = new Hashtable<>();
       Start ast = parser.parse();
-      ast.apply(new MyVisitor(symtable));
+      MyVisitor first = new MyVisitor(symtable);
+      ast.apply(first);
+      if(!first.getErrorExist())
+        ast.apply(new MyVisitor2(symtable));
       System.out.println("Symbol table has: " + symtable);
     }
     catch (Exception e)
