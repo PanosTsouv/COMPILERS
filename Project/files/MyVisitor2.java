@@ -1,11 +1,6 @@
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.Hashtable;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Stack;
-import java.util.Vector;
 
 import minipython.node.*;
 import minipython.analysis.DepthFirstAdapter;
@@ -15,15 +10,12 @@ public class MyVisitor2 extends DepthFirstAdapter
     private Hashtable symtable;
     private String key = "";
     private String currentFuction = "";
-    private Stack<String> operationQueue;
+    private Stack<String> operationStack;
     private Stack<String> functionCallStack = new Stack<>();
-    private boolean inAssignStatement = false;
-    private boolean inPrintStatement = false;
-    private boolean inFunctionCallStatement = false;
-    private boolean checkReturnStatementType = false;
     private Hashtable<String, Boolean> allCheckReturnStatements = new Hashtable<>();
-    private String returnStatementFunctionName = "";
-    private int line, column = 0;
+    private String returnStatementFunctionCallName = "";
+    private int line = 0;
+    private int currentFunctionLine, currentFunctionColumn = 0;
 
 
 
@@ -37,7 +29,6 @@ public class MyVisitor2 extends DepthFirstAdapter
 	{	
 		TId vTid = ((AIdentifierExpression)node.getIdExp()).getId();
 		String vName = vTid.toString().trim();
-        inAssignStatement = true;
 		if (currentFuction == "")
 		{
 			key = vName + "GVar";
@@ -50,32 +41,19 @@ public class MyVisitor2 extends DepthFirstAdapter
 		{
             symtable.put(key, "Unknown");
 		}
-        operationQueue = new Stack<>();
     }
 
     public void outAAssignStatement(AAssignStatement node)
 	{
-        inAssignStatement = true;
         if (symtable.containsKey(key))
 		{
             symtable.put(key, getExpressionType(node.getExp()));
         }
-        inAssignStatement = false;
-    }
-
-    public void inAPrintStatement(APrintStatement node)
-    {
-        inPrintStatement = true;
-    }
-
-    public void outAPrintStatement(APrintStatement node)
-    {
-        inPrintStatement = false;
     }
 
     public void inAIdentifierExpression(AIdentifierExpression node)
     {
-        if(!checkReturnStatementType)
+        if(!(allCheckReturnStatements.get(returnStatementFunctionCallName) != null))
         {
             boolean identifierInAFunctionPar = false;
             String vName = node.getId().toString().trim();
@@ -98,28 +76,31 @@ public class MyVisitor2 extends DepthFirstAdapter
             }
             else
             {
-                Function function = ((Hashtable<String, Function>)symtable.get(currentFuction)).get(currentFuction + line + column);
-                for(Hashtable<String, Object> arg : function.getArgsInfo())
+                if(!(node.parent() instanceof ADefFunction) && !(node.parent() instanceof AFirstArgument) && !(node.parent() instanceof AAfterFirstArgNextArgs))
                 {
-                    if(arg.get("argName").equals(vName))
+                    Function function = ((Hashtable<String, Function>)symtable.get(currentFuction)).get(currentFuction + currentFunctionLine + currentFunctionColumn);
+                    for(Hashtable<String, Object> arg : function.getArgsInfo())
                     {
-                        identifierInAFunctionPar = true;
-                    }
-                }
-                if(!identifierInAFunctionPar)
-                {
-                    if(node.parent() instanceof AFunctionCallExpression)
-                    {
-                        if(!symtable.containsKey(vName + "GVar") && !symtable.containsKey(vName + "LVar") && !symtable.containsKey(vName) && !(node == ((AFunctionCallExpression)node.parent()).getIdExp()))
+                        if(arg.get("argName").equals(vName))
                         {
-                            print(String.format("[%d,%d] : Name %s is not defined", node.getId().getLine(), node.getId().getPos(), vName));
+                            identifierInAFunctionPar = true;
                         }
                     }
-                    else
+                    if(!identifierInAFunctionPar)
                     {
-                        if(!symtable.containsKey(vName + "GVar") && !symtable.containsKey(vName + "LVar") && !symtable.containsKey(vName))
+                        if(node.parent() instanceof AFunctionCallExpression)
                         {
-                            print(String.format("[%d,%d] : Name %s is not defined", node.getId().getLine(), node.getId().getPos(), vName));
+                            if(!symtable.containsKey(vName + "GVar") && !symtable.containsKey(vName + "LVar") && !(node == ((AFunctionCallExpression)node.parent()).getIdExp()))
+                            {
+                                print(String.format("[%d,%d] : Name %s is not defined", node.getId().getLine(), node.getId().getPos(), vName));
+                            }
+                        }
+                        else
+                        {
+                            if(!symtable.containsKey(vName + "GVar") && !symtable.containsKey(vName + "LVar"))
+                            {
+                                print(String.format("[%d,%d] : Name %s is not defined", node.getId().getLine(), node.getId().getPos(), vName));
+                            }
                         }
                     }
                 }
@@ -134,79 +115,70 @@ public class MyVisitor2 extends DepthFirstAdapter
 
     public void outAAdditionExpression(AAdditionExpression node)
     {
-        if(inAssignStatement || inFunctionCallStatement || inPrintStatement)
-        {
-            PExpression left = node.getLeftExp();
-            PExpression right = node.getRightExp();
-            getType(left, right, node);
-        }
+        PExpression left = node.getLeftExp();
+        PExpression right = node.getRightExp();
+        getType(left, right, node);
+        
     }
 
     public void outAMultiplicationExpression(AMultiplicationExpression node)
     {
-        if(inAssignStatement || inFunctionCallStatement || inPrintStatement)
-        {
-            PExpression left = node.getLeftExp();
-            PExpression right = node.getRightExp();
-            getType(left, right, node);
-        }
+        PExpression left = node.getLeftExp();
+        PExpression right = node.getRightExp();
+        getType(left, right, node);
     }
 
     public void outADivisionExpression(ADivisionExpression node)
     {
-        if(inAssignStatement || inFunctionCallStatement || inPrintStatement)
-        {
-            PExpression left = node.getLeftExp();
-            PExpression right = node.getRightExp();
-            getType(left, right, node);
-        }
+        PExpression left = node.getLeftExp();
+        PExpression right = node.getRightExp();
+        getType(left, right, node);
     }
 
     public void outAModuloExpression(AModuloExpression node)
     {
-        if(inAssignStatement || inFunctionCallStatement || inPrintStatement)
-        {
-            PExpression left = node.getLeftExp();
-            PExpression right = node.getRightExp();
-            getType(left, right, node);
-        }
+        PExpression left = node.getLeftExp();
+        PExpression right = node.getRightExp();
+        getType(left, right, node);
     }
 
     public void outAPowerExpression(APowerExpression node)
     {
-        if(inAssignStatement || inFunctionCallStatement || inPrintStatement)
-        {
-            PExpression left = node.getLeftExp();
-            PExpression right = node.getRightExp();
-            getType(left, right, node);
-        }
+        PExpression left = node.getLeftExp();
+        PExpression right = node.getRightExp();
+        getType(left, right, node);
     }
 
     public void getType(PExpression left, PExpression right,PExpression node)
     {
-        if(operationQueue == null){operationQueue = new Stack<>();}
+        if(operationStack == null){operationStack = new Stack<>();}
         String rightType = ckeckInstanceOf(right);
         String leftType = ckeckInstanceOf(left);
 
-        if(leftType != "Unknown" && rightType != "Unknown")
+        if(leftType != "Unknown" && rightType != "Unknown" && leftType != "Error" && rightType != "Error")
         {
             if (!(node instanceof AMultiplicationExpression) || leftType == "None" || rightType == "None")
             {
                 if(leftType != rightType)
                 {
                     print(String.format("In line %d you can't add type %s with type %s",line, leftType, rightType));
+                    leftType = "Error";
                 }
             }
         }
-        if(leftType != "Unknown" && rightType != "Unknown")
+        if(leftType == "Unknown" || rightType == "Unknown")
         {
-            operationQueue.add(leftType);
+            operationStack.add("Unknown");
+        }
+        else if(leftType == "Error" || rightType == "Error")
+        {
+            operationStack.add("Error");
         }
         else
         {
-            operationQueue.add("Unknown");
+            operationStack.add(leftType);
         }
-        print(operationQueue);
+        //print(operationStack);
     }
 
     public String ckeckInstanceOf(PExpression x)
@@ -220,14 +192,34 @@ public class MyVisitor2 extends DepthFirstAdapter
             {
                 currentFunctionCallName = currentFuction;
             }
-            if((allCheckReturnStatements.get(returnStatementFunctionName) != null) && allCheckReturnStatements.get(returnStatementFunctionName))
+            if((allCheckReturnStatements.get(returnStatementFunctionCallName) != null))
             {
-                currentFunctionCallName = returnStatementFunctionName;
+                currentFunctionCallName = returnStatementFunctionCallName;
             }
             if(symtable.containsKey(currentFunctionCallName))
             {
-                String functionName = (String)((Hashtable<String, Object>)symtable.get(currentFunctionCallName + "Call")).get("functionName");
-                Function function = ((Hashtable<String, Function>)symtable.get(currentFunctionCallName)).get(functionName);
+                Function function;
+                String functionName;
+                if(currentFuction == "")
+                {
+                    functionName = (String)((Hashtable<String, Object>)symtable.get(currentFunctionCallName)).get("functionName");
+                    int callPos = currentFunctionCallName.lastIndexOf("Call");
+                    String temp = currentFunctionCallName.substring(0, callPos);
+                    function = ((Hashtable<String, Function>)symtable.get(temp)).get(functionName);
+                }
+                else
+                {
+                    if((allCheckReturnStatements.get(returnStatementFunctionCallName) != null))
+                    {
+                        functionName = (String)((Hashtable<String, Object>)symtable.get(currentFunctionCallName)).get("functionName");
+                        int callPos = currentFunctionCallName.lastIndexOf("Call");
+                        String temp = currentFunctionCallName.substring(0, callPos);
+                        function = ((Hashtable<String, Function>)symtable.get(temp)).get(functionName);
+                    }
+                    else{
+                        function = ((Hashtable<String, Function>)symtable.get(currentFunctionCallName)).get(currentFunctionCallName + currentFunctionLine + currentFunctionColumn);
+                    }
+                }
                 for(int i = 0; i < function.getArgsInfo().size(); i++)
                 {
                     if(function.getArgsInfo().get(i).get("argName").equals(((AIdentifierExpression)x).getId().toString().trim()))
@@ -276,21 +268,22 @@ public class MyVisitor2 extends DepthFirstAdapter
         }
         else if(x instanceof AFunctionCallExpression)
         {
-            if(symtable.containsKey(((AIdentifierExpression)((AFunctionCallExpression)x).getIdExp()).getId().toString().trim() + "Call"))
+            line = ((AIdentifierExpression)((AFunctionCallExpression)x).getIdExp()).getId().getLine();
+            int col = ((AIdentifierExpression)((AFunctionCallExpression)x).getIdExp()).getId().getPos();
+            if(symtable.containsKey(((AIdentifierExpression)((AFunctionCallExpression)x).getIdExp()).getId().toString().trim() + "Call" + line + col))
             {
-                xType = (String)((Hashtable<String, Object>)symtable.get(((AIdentifierExpression)((AFunctionCallExpression)x).getIdExp()).getId().toString().trim() + "Call")).get("returnType");
+                xType = (String)((Hashtable<String, Object>)symtable.get(((AIdentifierExpression)((AFunctionCallExpression)x).getIdExp()).getId().toString().trim() + "Call" + line + col)).get("returnType");
             }
             else
             {
                 xType = "Unknown";
             }
-            line = ((AIdentifierExpression)((AFunctionCallExpression)x).getIdExp()).getId().getLine();
         }
         else
         {
-            if(operationQueue.size() > 0)
+            if(operationStack.size() > 0)
             {
-                xType = operationQueue.pop();
+                xType = operationStack.pop();
             }
             else
             {
@@ -304,8 +297,8 @@ public class MyVisitor2 extends DepthFirstAdapter
 	{
         String fName = ((AIdentifierExpression)node.getExpression()).getId().toString().trim();
         currentFuction = fName;
-        line = ((AIdentifierExpression)node.getExpression()).getId().getLine();
-        column = ((AIdentifierExpression)node.getExpression()).getId().getPos();
+        currentFunctionLine = ((AIdentifierExpression)node.getExpression()).getId().getLine();
+        currentFunctionColumn = ((AIdentifierExpression)node.getExpression()).getId().getPos();
     }
 
     public void outADefFunction(ADefFunction node)
@@ -316,12 +309,10 @@ public class MyVisitor2 extends DepthFirstAdapter
     public void inAFunctionCallExpression(AFunctionCallExpression node)
 	{
         boolean findFunction = false;
-        inFunctionCallStatement = true;
 		LinkedList args = node.getArglistExps();
 		TId fCallTId = ((AIdentifierExpression)node.getIdExp()).getId();
         String fCallname = fCallTId.toString().trim();
-        allCheckReturnStatements.put(fCallname, false);
-        functionCallStack.add(fCallname);
+        functionCallStack.add(fCallname + "Call" + fCallTId.getLine() + fCallTId.getPos());
 		if(symtable.containsKey(fCallname))
 		{
 			for(Function function : ((Hashtable<String, Function>)symtable.get(fCallname)).values())
@@ -331,19 +322,19 @@ public class MyVisitor2 extends DepthFirstAdapter
 					Hashtable<String, Object> fCallData = new Hashtable<>();
 					fCallData.put("functionName", function.getName());
 					fCallData.put("returnType", "Unknown");
-					symtable.put(fCallname + "Call", fCallData);
+					symtable.put(fCallname + "Call" + fCallTId.getLine() + fCallTId.getPos(), fCallData);
 					findFunction = true;
 				}
 			}
 			if(!findFunction)
 			{
-                if(!checkReturnStatementType)
+                if(!(allCheckReturnStatements.get(returnStatementFunctionCallName) != null))
 				    print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function " + fCallname +" is defined with different number of arguments");
 			}
 		}
 		else
 		{
-            if(!checkReturnStatementType)
+            if(!(allCheckReturnStatements.get(returnStatementFunctionCallName) != null))
 			    print("[" + fCallTId.getLine() + "," + fCallTId.getPos() + "]" + ": " +" Function " + fCallname +" is not defined");
         }
     }
@@ -354,9 +345,9 @@ public class MyVisitor2 extends DepthFirstAdapter
         TId fCallTId = ((AIdentifierExpression)node.getIdExp()).getId();
         String callName = fCallTId.toString().trim();
         Function function = null;
-        if(symtable.containsKey(callName) && symtable.containsKey(functionCallStack.get(functionCallStack.size()-1) + "Call"))
+        if(symtable.containsKey(callName) && symtable.containsKey(functionCallStack.get(functionCallStack.size()-1)))
         {
-            function = ((Hashtable<String, Function>)symtable.get(callName)).get(((Hashtable<String, Object>)symtable.get(functionCallStack.get(functionCallStack.size()-1) + "Call")).get("functionName"));
+            function = ((Hashtable<String, Function>)symtable.get(callName)).get(((Hashtable<String, Object>)symtable.get(functionCallStack.get(functionCallStack.size()-1))).get("functionName"));
         }
         if(function != null)
         {
@@ -367,40 +358,60 @@ public class MyVisitor2 extends DepthFirstAdapter
             }
             if(function.getReturnStatement() != null)
             {
-                if(function.getReturnStatement().getExpression() instanceof AAdditionExpression
-                    || function.getReturnStatement().getExpression() instanceof AMultiplicationExpression
-                    || function.getReturnStatement().getExpression() instanceof ADivisionExpression
-                    || function.getReturnStatement().getExpression() instanceof AModuloExpression
-                    || function.getReturnStatement().getExpression() instanceof APowerExpression)
+                if(isAnOperationReturnExp(function))
                 {
-                    checkReturnStatementType = true;
-                    allCheckReturnStatements.put(callName, true);
-                    returnStatementFunctionName = callName;
-                    caseAAdditionExpression((AAdditionExpression)function.getReturnStatement().getExpression());
-                    checkReturnStatementType = false;
-                    allCheckReturnStatements.put(callName, false);
-                    ((Hashtable<String, Object>)symtable.get(functionCallStack.get(functionCallStack.size()-1) + "Call")).put("returnType", getExpressionType(function.getReturnStatement().getExpression()));
+                    allCheckReturnStatements.put(callName + "Call" + fCallTId.getLine() + fCallTId.getPos(), true);
+                    returnStatementFunctionCallName = callName + "Call" + fCallTId.getLine() + fCallTId.getPos();;
+                    ckeckAReturnExpOperation(function);
+                    allCheckReturnStatements.remove(callName + "Call" + fCallTId.getLine() + fCallTId.getPos());
+                    ((Hashtable<String, Object>)symtable.get(functionCallStack.get(functionCallStack.size()-1))).put("returnType", getExpressionType(function.getReturnStatement().getExpression()));
                     
                 }
                 else
                 {
-                    checkReturnStatementType = true;
-                    allCheckReturnStatements.put(callName, true);
-                    returnStatementFunctionName = callName;
-                    ((Hashtable<String, Object>)symtable.get(functionCallStack.get(functionCallStack.size()-1) + "Call")).put("returnType", getExpressionType(function.getReturnStatement().getExpression()));
-                    checkReturnStatementType = false;
-                    allCheckReturnStatements.put(callName, false);
+                    allCheckReturnStatements.put(callName + "Call" + fCallTId.getLine() + fCallTId.getPos(), true);
+                    returnStatementFunctionCallName = callName + "Call" + fCallTId.getLine() + fCallTId.getPos();
+                    ((Hashtable<String, Object>)symtable.get(functionCallStack.get(functionCallStack.size()-1))).put("returnType", getExpressionType(function.getReturnStatement().getExpression()));
+                    allCheckReturnStatements.remove(callName + "Call" + fCallTId.getLine() + fCallTId.getPos());
                 }
             }
             else
             {
-                ((Hashtable<String, Object>)symtable.get(functionCallStack.get(functionCallStack.size()-1) + "Call")).put("returnType", "None");
+                ((Hashtable<String, Object>)symtable.get(functionCallStack.get(functionCallStack.size()-1))).put("returnType", "None");
             }
         }
-        inFunctionCallStatement =false;
         functionCallStack.pop();
         if(functionCallStack.size() > 0)
-            returnStatementFunctionName = functionCallStack.get(functionCallStack.size()-1);
+            returnStatementFunctionCallName = functionCallStack.get(functionCallStack.size()-1);
+    }
+
+    public boolean isAnOperationReturnExp(Function function)
+    {
+        if(function.getReturnStatement().getExpression() instanceof AAdditionExpression)
+            return true;
+        if(function.getReturnStatement().getExpression() instanceof AMultiplicationExpression)
+            return true;
+        if(function.getReturnStatement().getExpression() instanceof ADivisionExpression)
+            return true;
+        if(function.getReturnStatement().getExpression() instanceof AModuloExpression)
+            return true;
+        if(function.getReturnStatement().getExpression() instanceof APowerExpression)
+            return true;
+        return false;
+    }
+
+    public void ckeckAReturnExpOperation(Function function)
+    {
+        if(function.getReturnStatement().getExpression() instanceof AAdditionExpression)
+            caseAAdditionExpression((AAdditionExpression)function.getReturnStatement().getExpression());
+        if(function.getReturnStatement().getExpression() instanceof AMultiplicationExpression)
+            caseAMultiplicationExpression((AMultiplicationExpression)function.getReturnStatement().getExpression());
+        if(function.getReturnStatement().getExpression() instanceof ADivisionExpression)
+            caseADivisionExpression((ADivisionExpression)function.getReturnStatement().getExpression());
+        if(function.getReturnStatement().getExpression() instanceof AModuloExpression)
+            caseAModuloExpression((AModuloExpression)function.getReturnStatement().getExpression());
+        if(function.getReturnStatement().getExpression() instanceof APowerExpression)
+            caseAPowerExpression((APowerExpression)function.getReturnStatement().getExpression());
     }
     
     public void print(Object objectToPrint)
