@@ -66,14 +66,14 @@ public class MyVisitor2 extends DepthFirstAdapter
     {
         PExpression left = node.getIdExp();
         PExpression right = node.getExp();
-        getType(left, right, null);
+        getType(left, right, null, node, false);
     }
 
     public void outADivAssignStatement(ADivAssignStatement node)
     {
         PExpression left = node.getIdExp();
         PExpression right = node.getExp();
-        getType(left, right, null);
+        getType(left, right, null, node, false);
     }
 
     public void inAIdentifierExpression(AIdentifierExpression node)
@@ -142,7 +142,7 @@ public class MyVisitor2 extends DepthFirstAdapter
     {
         PExpression left = node.getLeftExp();
         PExpression right = node.getRightExp();
-        getType(left, right, node);
+        getType(left, right, node, null, true);
         
     }
 
@@ -150,31 +150,31 @@ public class MyVisitor2 extends DepthFirstAdapter
     {
         PExpression left = node.getLeftExp();
         PExpression right = node.getRightExp();
-        getType(left, right, node);
+        getType(left, right, node, null, true);
     }
 
     public void outADivisionExpression(ADivisionExpression node)
     {
         PExpression left = node.getLeftExp();
         PExpression right = node.getRightExp();
-        getType(left, right, node);
+        getType(left, right, node, null, true);
     }
 
     public void outAModuloExpression(AModuloExpression node)
     {
         PExpression left = node.getLeftExp();
         PExpression right = node.getRightExp();
-        getType(left, right, node);
+        getType(left, right, node, null, true);
     }
 
     public void outAPowerExpression(APowerExpression node)
     {
         PExpression left = node.getLeftExp();
         PExpression right = node.getRightExp();
-        getType(left, right, node);
+        getType(left, right, node, null, true);
     }
 
-    public void getType(PExpression left, PExpression right,PExpression node)
+    public void getType(PExpression left, PExpression right, PExpression node, PStatement stateNode, boolean storeResult)
     {
         if(operationStack == null){operationStack = new Stack<>();}
         String rightType = ckeckInstanceOf(right);
@@ -186,22 +186,40 @@ public class MyVisitor2 extends DepthFirstAdapter
             {
                 if(leftType != rightType)
                 {
-                    print(String.format("In line %d you can't add type %s with type %s",line, leftType, rightType));
+                    if(node instanceof AAdditionExpression)
+                        print(String.format("In line %d you can't add type %s with type %s",line, leftType, rightType));
+                    if(node instanceof ASubtractionExpression)
+                        print(String.format("In line %d you can't sub type %s with type %s",line, leftType, rightType));
+                    if(node instanceof AMultiplicationExpression)
+                        print(String.format("In line %d you can't mult type %s with type %s",line, leftType, rightType));
+                    if(node instanceof ADivisionExpression)
+                        print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
+                    if(node instanceof AModuloExpression)
+                        print(String.format("In line %d you can't mod type %s with type %s",line, leftType, rightType));
+                    if(node instanceof APowerExpression)
+                        print(String.format("In line %d you can't power type %s with type %s",line, leftType, rightType));
+                    if(stateNode != null && stateNode instanceof ADivAssignStatement)
+                        print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
+                    if(stateNode != null && stateNode instanceof ADivAssignStatement)
+                        print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
                     leftType = "Error";
                 }
             }
         }
-        if(leftType == "Unknown" || rightType == "Unknown")
+        if(storeResult)
         {
-            operationStack.add("Unknown");
-        }
-        else if(leftType == "Error" || rightType == "Error")
-        {
-            operationStack.add("Error");
-        }
-        else
-        {
-            operationStack.add(leftType);
+            if(leftType == "Unknown" || rightType == "Unknown")
+            {
+                operationStack.add("Unknown");
+            }
+            else if(leftType == "Error" || rightType == "Error")
+            {
+                operationStack.add("Error");
+            }
+            else
+            {
+                operationStack.add(leftType);
+            }
         }
         //print(operationStack);
     }
@@ -291,6 +309,10 @@ public class MyVisitor2 extends DepthFirstAdapter
             xType = "STRING_LITERAL";
             line = ((AStringExpression)x).getString().getLine();
         }
+        else if(x instanceof ATypesExpression)
+        {
+            xType = "Type";
+        }
         else if(x instanceof AFunctionCallExpression)
         {
             line = ((AIdentifierExpression)((AFunctionCallExpression)x).getIdExp()).getId().getLine();
@@ -346,9 +368,23 @@ public class MyVisitor2 extends DepthFirstAdapter
 				{
 					Hashtable<String, Object> fCallData = new Hashtable<>();
 					fCallData.put("functionName", function.getName());
-					fCallData.put("returnType", "Unknown");
+                    fCallData.put("returnType", "Unknown");
+                    fCallData.put("line", fCallTId.getLine());
+					fCallData.put("pos", fCallTId.getPos());
 					symtable.put(fCallname + "Call" + fCallTId.getLine() + fCallTId.getPos(), fCallData);
-					findFunction = true;
+                    findFunction = true;
+                    // if(currentFuction == "")
+                    // {
+                    //     if(functionCallStack.size() > 1)
+                    //     {
+                    //         print((int)((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line"));
+                    //         print(((AIdentifierExpression)function.getADefFunction().getExpression()).getId().getLine());
+                    //         if((int)((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line") < ((AIdentifierExpression)function.getADefFunction().getExpression()).getId().getLine())
+                    //         {
+                    //             print("ERROR" + ((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line"));
+                    //         }
+                    //     }
+                    // }
 				}
 			}
 			if(!findFunction)
@@ -376,9 +412,16 @@ public class MyVisitor2 extends DepthFirstAdapter
         }
         if(function != null)
         {
+            int args = function.getArgs();
+            int defaultArgs = function.getDefaultArgs();
             for(PExpression arg : ((LinkedList<PExpression>)node.getArglistExps()))
             {
-                function.getArgsInfo().get(count).put("type", getExpressionType(arg));
+                if(count < (args - defaultArgs))
+                    function.getArgsInfo().get(count).put("type", getExpressionType(arg));
+                if(count >= (args - defaultArgs))
+                {
+                    print("In line " + fCallTId.getLine() + " : Pass a value of type " + getExpressionType(arg) + " to an argument of type " + function.getArgsInfo().get(count).get("type"));
+                }
                 count++;
             }
             if(function.getReturnStatement() != null)
