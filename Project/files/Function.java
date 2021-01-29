@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Hashtable;
 
+import minipython.node.ADefFunction;
 import minipython.node.AReturnStatement;
 
 public class Function {
@@ -9,6 +10,7 @@ public class Function {
     private int defaultArgs;
     private ArrayList<Hashtable<String, Object>> argsInfo;
     private AReturnStatement returnStatement;
+    private ADefFunction node;
 
     public Function()
     {
@@ -44,6 +46,11 @@ public class Function {
         return this.returnStatement;
     }
 
+    public ADefFunction getADefFunction()
+    {
+        return this.node;
+    }
+
     public void setName(String name)
     {
         this.name = name;
@@ -67,6 +74,11 @@ public class Function {
     public void setReturnStatement(AReturnStatement returnStatement)
     {
         this.returnStatement = returnStatement;
+    }
+
+    public void setADefFunction(ADefFunction node)
+    {
+        this.node = node;
     }
 
     @Override
