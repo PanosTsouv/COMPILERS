@@ -1,3 +1,9 @@
+/*
+Παναγιώτης Τσουβελεκάκης p3130212
+Φώτης Τσουβελεκάκης p3130213
+Μιχαήλ Βαζαίος p3170013
+*/
+
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Stack;
@@ -373,18 +379,6 @@ public class MyVisitor2 extends DepthFirstAdapter
 					fCallData.put("pos", fCallTId.getPos());
 					symtable.put(fCallname + "Call" + fCallTId.getLine() + fCallTId.getPos(), fCallData);
                     findFunction = true;
-                    // if(currentFuction == "")
-                    // {
-                    //     if(functionCallStack.size() > 1)
-                    //     {
-                    //         print((int)((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line"));
-                    //         print(((AIdentifierExpression)function.getADefFunction().getExpression()).getId().getLine());
-                    //         if((int)((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line") < ((AIdentifierExpression)function.getADefFunction().getExpression()).getId().getLine())
-                    //         {
-                    //             print("ERROR" + ((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line"));
-                    //         }
-                    //     }
-                    // }
 				}
 			}
 			if(!findFunction)
