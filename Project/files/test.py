@@ -8,7 +8,7 @@ functionNotDefine1()
 def functionNotDefine1():
     # right
     return functionDefine()
-
+# wrong
 functionNotDefine1()
 
 def functionDefine():
@@ -152,3 +152,14 @@ k /= 2
 def argsPass(a="a", b=None):
     print(1)
 argsPass(1,2)
+print("a")
+
+# Error 11 operation with None , open(), type()
+print(open("path","r") + open("path","r"))
+print(open("path","r") + type(w))
+print(None + type(w))
+print(None + open("path","r"))
+print(1 + open("path","r"))
+print("1" + open("path","r"))
+print(1 + type(w))
+print("None" + type(w))
