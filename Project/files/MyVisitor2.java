@@ -192,22 +192,18 @@ public class MyVisitor2 extends DepthFirstAdapter
             {
                 if(leftType != rightType)
                 {
-                    if(node instanceof AAdditionExpression)
-                        print(String.format("In line %d you can't add type %s with type %s",line, leftType, rightType));
-                    if(node instanceof ASubtractionExpression)
-                        print(String.format("In line %d you can't sub type %s with type %s",line, leftType, rightType));
-                    if(node instanceof AMultiplicationExpression)
-                        print(String.format("In line %d you can't mult type %s with type %s",line, leftType, rightType));
-                    if(node instanceof ADivisionExpression)
-                        print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
-                    if(node instanceof AModuloExpression)
-                        print(String.format("In line %d you can't mod type %s with type %s",line, leftType, rightType));
-                    if(node instanceof APowerExpression)
-                        print(String.format("In line %d you can't power type %s with type %s",line, leftType, rightType));
-                    if(stateNode != null && stateNode instanceof ADivAssignStatement)
-                        print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
-                    if(stateNode != null && stateNode instanceof ADivAssignStatement)
-                        print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
+                    printErrorMessage(node, stateNode, leftType, rightType);
+                    leftType = "Error";
+                }
+            }
+        }
+        if(leftType != "Unknown" && rightType != "Unknown" && leftType != "Error" && rightType != "Error")
+        {
+            if(leftType.equals("Type") || leftType.equals("File"))
+            {
+                if(leftType.equals(rightType));
+                {
+                    printErrorMessage(node, stateNode, leftType, rightType);
                     leftType = "Error";
                 }
             }
@@ -228,6 +224,26 @@ public class MyVisitor2 extends DepthFirstAdapter
             }
         }
         //print(operationStack);
+    }
+
+    private void printErrorMessage(PExpression node, PStatement stateNode, String leftType, String rightType)
+    {
+        if(node instanceof AAdditionExpression)
+            print(String.format("In line %d you can't add type %s with type %s",line, leftType, rightType));
+        if(node instanceof ASubtractionExpression)
+            print(String.format("In line %d you can't sub type %s with type %s",line, leftType, rightType));
+        if(node instanceof AMultiplicationExpression)
+            print(String.format("In line %d you can't mult type %s with type %s",line, leftType, rightType));
+        if(node instanceof ADivisionExpression)
+            print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
+        if(node instanceof AModuloExpression)
+            print(String.format("In line %d you can't mod type %s with type %s",line, leftType, rightType));
+        if(node instanceof APowerExpression)
+            print(String.format("In line %d you can't power type %s with type %s",line, leftType, rightType));
+        if(stateNode != null && stateNode instanceof ADivAssignStatement)
+            print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
+        if(stateNode != null && stateNode instanceof ADivAssignStatement)
+            print(String.format("In line %d you can't div type %s with type %s",line, leftType, rightType));
     }
 
     public String ckeckInstanceOf(PExpression x)
@@ -318,6 +334,14 @@ public class MyVisitor2 extends DepthFirstAdapter
         else if(x instanceof ATypesExpression)
         {
             xType = "Type";
+            getExpressionType(((ATypesExpression)x).getExpression());
+            //line = ((ATypesExpression)x). .getLine();
+        }
+        else if(x instanceof AOpensExpression)
+        {
+            xType = "File";
+            getExpressionType(((AOpensExpression)x).getExp1());
+            //line = ((AOpensExpression)x).getString().getLine();
         }
         else if(x instanceof AFunctionCallExpression)
         {
@@ -379,6 +403,18 @@ public class MyVisitor2 extends DepthFirstAdapter
 					fCallData.put("pos", fCallTId.getPos());
 					symtable.put(fCallname + "Call" + fCallTId.getLine() + fCallTId.getPos(), fCallData);
                     findFunction = true;
+                    // if(currentFuction == "")
+                    // {
+                    //     if(functionCallStack.size() > 1)
+                    //     {
+                    //         print((int)((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line"));
+                    //         print(((AIdentifierExpression)function.getADefFunction().getExpression()).getId().getLine());
+                    //         if((int)((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line") < ((AIdentifierExpression)function.getADefFunction().getExpression()).getId().getLine())
+                    //         {
+                    //             print("ERROR" + ((Hashtable<String, Object>)symtable.get(functionCallStack.get(0))).get("line"));
+                    //         }
+                    //     }
+                    // }
 				}
 			}
 			if(!findFunction)
